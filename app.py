@@ -11,13 +11,14 @@ if uploaded_file is not None:
     bytes_data = uploaded_file.getvalue()
     data = bytes_data.decode('utf-8')
     df = preprocessor.preprocess(data)
-    st.write("Parsed DataFrame Preview:")
-    st.dataframe(df.head())
     st.write("Shape of DataFrame:", df.shape)
     st.subheader("Data Check")
     st.write("Columns:", df.columns.tolist())
-    st.dataframe(df.head(5))
-
+    st.write("Unique values per key columns:")
+    st.write("Unique dates:", df['date'].nunique())
+    st.write("Unique months:", df['month'].nunique())
+    st.write("Unique weekdays:", df['week_day'].nunique())
+    st.write("Unique periods:", df['period'].nunique())
 
     #fetch unique user
     user_list = df['users'].unique().tolist()
@@ -53,10 +54,14 @@ if uploaded_file is not None:
         #time analysis
         st.title("Monthly Time Analysis")
         timeline = helper.time_analysis(selected_user,df)
-        fig,ax = plt.subplots(figsize=(8,4))
-        ax.plot(timeline['time'],timeline['messages'], color = 'green')
-        plt.xticks(rotation='vertical')
-        st.pyplot(fig)
+        if timeline.shape[0] < 2:
+            st.warning("Not enough data to show Monthly Time Analysis.")
+        else:
+            fig, ax = plt.subplots(figsize=(8, 4))
+            ax.plot(timeline['time'], timeline['messages'], color='green')
+            plt.xticks(rotation='vertical')
+            st.pyplot(fig)
+
 
         #activity map
         st.title('Activity Map')
@@ -65,18 +70,26 @@ if uploaded_file is not None:
         with col1:
             st.header("Most Busy Day")
             week_day = helper.weekly_activity(selected_user, df)
-            fig, ax = plt.subplots()
-            ax.bar(week_day.index, week_day.values,)
-            plt.xticks(rotation='vertical')
-            st.pyplot(fig)
+            if week_day.empty:
+                st.warning("Not enough data to show Most Busy Day chart.")
+            else:
+                fig, ax = plt.subplots()
+                ax.bar(week_day.index, week_day.values)
+                plt.xticks(rotation='vertical')
+                st.pyplot(fig)
+
 
         with col2:
             st.header("Most Busy Month")
-            month_name = helper.monthly_activity(selected_user,df)
-            fig, ax = plt.subplots()
-            ax.bar(month_name.index,month_name.values,color='pink')
-            plt.xticks(rotation='vertical')
-            st.pyplot(fig)
+            month_name = helper.monthly_activity(selected_user, df)
+            if month_name.empty:
+                st.warning("Not enough data to show Most Busy Month chart.")
+            else:
+                fig, ax = plt.subplots()
+                ax.bar(month_name.index, month_name.values, color='pink')
+                plt.xticks(rotation='vertical')
+                st.pyplot(fig)
+
 
         # heatmap
         st.title("Weekly Activity Map")
