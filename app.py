@@ -16,7 +16,7 @@ if uploaded_file is not None:
     st.write("Shape of DataFrame:", df.shape)
 
     #fetch unique user
-    user_list = df['user'].unique().tolist()
+    user_list = df['users'].unique().tolist()
     if 'group_notifications' in user_list:
         user_list.remove('group_notifications')
     user_list.sort()
