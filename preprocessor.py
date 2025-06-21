@@ -2,39 +2,34 @@ import re
 import pandas as pd
 
 def preprocess(data):
-    # Fix for non-breaking space (e.g., between time and "pm") using \s? and accept both "am" and "pm"
-    pattern = r'\d{1,2}/\d{1,2}/\d{2},\s\d{1,2}:\d{2}(?:\s?[ap]m)\s-\s'
+    # Fix for non-breaking spaces
+    data = data.replace('\u202f', ' ').replace('\xa0', ' ')
 
+    # Updated regex
+    pattern = r'\d{1,2}/\d{1,2}/\d{2},\s\d{1,2}:\d{2}(?:\s?[ap]m)\s-\s'
     messages = re.split(pattern, data)[1:]
     dates = re.findall(pattern, data)
 
     if len(messages) != len(dates):
-        print("⚠️ Mismatch in messages and dates. Possibly wrong format.")
         return pd.DataFrame()
 
     df = pd.DataFrame({'user_messages': messages, 'message_date': dates})
 
-    # Convert message_date datatype
-    df['message_date'] = pd.to_datetime(df['message_date'].str.replace('\u202f', ' ').str.strip(), 
-                                        format='%d/%m/%y, %I:%M %p - ', errors='coerce')
-
+    df['message_date'] = pd.to_datetime(df['message_date'].str.strip(), format='%d/%m/%y, %I:%M %p - ', errors='coerce')
     df.rename(columns={'message_date': 'date'}, inplace=True)
 
-    # Separate users and messages
-    users = []
-    messages = []
-
+    users, msgs = [], []
     for message in df['user_messages']:
         entry = re.split(r'([\w\W]+?):\s', message)
         if entry[1:]:
             users.append(entry[1])
-            messages.append(entry[2])
+            msgs.append(entry[2])
         else:
             users.append('group_notifications')
-            messages.append(entry[0])
+            msgs.append(entry[0])
 
     df['users'] = users
-    df['messages'] = messages
+    df['messages'] = msgs
     df.drop(columns=['user_messages'], inplace=True)
 
     df['year'] = df['date'].dt.year
@@ -45,7 +40,7 @@ def preprocess(data):
     df['hour'] = df['date'].dt.hour
     df['minutes'] = df['date'].dt.minute
 
-    # Create time periods for heatmap
+    # Period for heatmap
     period = []
     for hour in df['hour']:
         if hour == 23:
