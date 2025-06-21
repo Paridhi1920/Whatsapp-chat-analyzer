@@ -2,26 +2,31 @@ import re
 import pandas as pd
 
 def preprocess(data):
-    pattern = r'\d{1,2}/\d{1,2}/\d{2},\s\d{1,2}:\d{2}\s-\s'
+    # Fix for non-breaking space (e.g., between time and "pm") using \s? and accept both "am" and "pm"
+    pattern = r'\d{1,2}/\d{1,2}/\d{2},\s\d{1,2}:\d{2}(?:\s?[ap]m)\s-\s'
 
-    messages = re.split(pattern,data)[1:]
+    messages = re.split(pattern, data)[1:]
     dates = re.findall(pattern, data)
 
-    df = pd.DataFrame({'user_messages' : messages, 'message_date': dates})
+    if len(messages) != len(dates):
+        print("⚠️ Mismatch in messages and dates. Possibly wrong format.")
+        return pd.DataFrame()
 
-    # convert message_date datatype
-    df['message_date'] = pd.to_datetime(df['message_date'], format='%d/%m/%y, %H:%M - ')
+    df = pd.DataFrame({'user_messages': messages, 'message_date': dates})
 
-    #renaming the column
-    df.rename(columns ={'message_date' : 'date'}, inplace = True)
+    # Convert message_date datatype
+    df['message_date'] = pd.to_datetime(df['message_date'].str.replace('\u202f', ' ').str.strip(), 
+                                        format='%d/%m/%y, %I:%M %p - ', errors='coerce')
 
-    #separate users and messages
-    users =[]
+    df.rename(columns={'message_date': 'date'}, inplace=True)
+
+    # Separate users and messages
+    users = []
     messages = []
 
     for message in df['user_messages']:
         entry = re.split(r'([\w\W]+?):\s', message)
-        if entry[1:]:    #user name (also write as - if len(entry) > 2 : )
+        if entry[1:]:
             users.append(entry[1])
             messages.append(entry[2])
         else:
@@ -30,7 +35,7 @@ def preprocess(data):
 
     df['users'] = users
     df['messages'] = messages
-    df.drop(columns=['user_messages'], inplace = True)
+    df.drop(columns=['user_messages'], inplace=True)
 
     df['year'] = df['date'].dt.year
     df['month'] = df['date'].dt.month_name()
@@ -40,15 +45,15 @@ def preprocess(data):
     df['hour'] = df['date'].dt.hour
     df['minutes'] = df['date'].dt.minute
 
+    # Create time periods for heatmap
     period = []
-    for hour in df[['week_day', 'hour']]['hour']:
+    for hour in df['hour']:
         if hour == 23:
-            period.append(str(hour) + "-" + str('00'))
+            period.append(f"{hour}-00")
         elif hour == 0:
-            period.append(str('00') + "-" + str(hour + 1))
+            period.append("00-1")
         else:
-            period.append(str(hour) + "-" + str(hour + 1))
-
+            period.append(f"{hour}-{hour+1}")
     df['period'] = period
 
     return df

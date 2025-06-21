@@ -11,9 +11,12 @@ if uploaded_file is not None:
     bytes_data = uploaded_file.getvalue()
     data = bytes_data.decode('utf-8')
     df = preprocessor.preprocess(data)
+    st.write("Parsed DataFrame Preview:")
+    st.dataframe(df.head())
+    st.write("Shape of DataFrame:", df.shape)
 
     #fetch unique user
-    user_list = df['users'].unique().tolist()
+    user_list = df['user'].unique().tolist()
     if 'group_notifications' in user_list:
         user_list.remove('group_notifications')
     user_list.sort()
@@ -74,9 +77,12 @@ if uploaded_file is not None:
         #heatmap
         st.title("Weekly Activity Map")
         user_heatmap = helper.activity_heatmap(selected_user,df)
-        fig,ax = plt.subplots()
-        ax = sns.heatmap(user_heatmap)
-        st.pyplot(fig)
+        if user_heatmap.empty:
+            st.warning("Not enough data to generate heatmap.")
+        else:
+            fig, ax = plt.subplots()
+            ax = sns.heatmap(user_heatmap)
+            st.pyplot(fig)
 
 
         #finding the busiest user in the group(Group level)
