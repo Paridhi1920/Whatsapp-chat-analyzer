@@ -11,14 +11,6 @@ if uploaded_file is not None:
     bytes_data = uploaded_file.getvalue()
     data = bytes_data.decode('utf-8')
     df = preprocessor.preprocess(data)
-    st.write("Shape of DataFrame:", df.shape)
-    st.subheader("Data Check")
-    st.write("Columns:", df.columns.tolist())
-    st.write("Unique values per key columns:")
-    st.write("Unique dates:", df['date'].nunique())
-    st.write("Unique months:", df['month'].nunique())
-    st.write("Unique weekdays:", df['week_day'].nunique())
-    st.write("Unique periods:", df['period'].nunique())
 
     #fetch unique user
     user_list = df['users'].unique().tolist()
