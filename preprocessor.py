@@ -2,25 +2,27 @@ import re
 import pandas as pd
 
 def preprocess(data):
-    # Replace non-breaking spaces
+    # Normalize weird spaces
     data = data.replace('\u202f', ' ').replace('\xa0', ' ')
 
-    # Updated regex to match new WhatsApp export format
-    pattern = r'\d{1,2}/\d{1,2}/\d{2},\s\d{1,2}:\d{2}(?:\s?[ap]m)\s-\s'
+    # Regex for 12-hour format with optional AM/PM spacing
+    pattern = r'\d{1,2}/\d{1,2}/\d{2},\s\d{1,2}:\d{2}(?:\s?[apAP][mM])\s-\s'
     messages = re.split(pattern, data)[1:]
     dates = re.findall(pattern, data)
 
     if len(messages) != len(dates):
         return pd.DataFrame()
 
+    # Create DataFrame
     df = pd.DataFrame({'user_messages': messages, 'message_date': dates})
 
-    # Parse 12-hour time format
+    # Remove trailing characters and parse datetime
     df['message_date'] = pd.to_datetime(
         df['message_date'].str.strip(),
-        format='%d/%m/%y, %I:%M %p - ',
+        format='%d/%m/%y, %I:%M %p -',
         errors='coerce'
     )
+
     df.rename(columns={'message_date': 'date'}, inplace=True)
 
     users, msgs = [], []
@@ -46,11 +48,13 @@ def preprocess(data):
     df['hour'] = df['date'].dt.hour
     df['minutes'] = df['date'].dt.minute
 
-    # Create 'period' for heatmap
+    # Periods for heatmap
     period = []
     for hour in df['hour']:
-        if hour == 23:
-            period.append(f"{hour}-00")
+        if pd.isna(hour):
+            period.append("unknown")
+        elif hour == 23:
+            period.append("23-00")
         elif hour == 0:
             period.append("00-1")
         else:
