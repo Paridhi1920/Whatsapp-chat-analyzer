@@ -34,8 +34,8 @@
 
 ## 🌐 Live Demo
 
-🚀 Try it out here:  
-**[Open in Streamlit](https://https://whatsapp-chat-analyzer-jthbtwtznyx2fpnov4fsla.streamlit.app/)**
+🚀 Open it manually in a new tab:  
+**[https://whatsapp-chat-analyzer-jthbtwtznyx2fpnov4fsla.streamlit.app](https://https://whatsapp-chat-analyzer-jthbtwtznyx2fpnov4fsla.streamlit.app)**
 
 Hosted on **Streamlit Community Cloud** ☁️
 
