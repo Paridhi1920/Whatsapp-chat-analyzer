@@ -14,6 +14,10 @@ if uploaded_file is not None:
     st.write("Parsed DataFrame Preview:")
     st.dataframe(df.head())
     st.write("Shape of DataFrame:", df.shape)
+    st.subheader("Data Check")
+    st.write("Columns:", df.columns.tolist())
+    st.dataframe(df.head(5))
+
 
     #fetch unique user
     user_list = df['users'].unique().tolist()
